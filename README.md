@@ -77,21 +77,90 @@ When you want to forcefully reload, for example to reset the state of your app, 
 
 You've successfully run and modified your React Native App. :partying_face:
 
-### Now what?
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
 
-# Troubleshooting
+# DeviceInfoTest
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+DeviceInfoTest is a React Native project bootstrapped with [`@react-native-community/cli`](https://github.com/react-native-community/cli). 
+It includes a custom native module, codegen configuration, and uses TypeScript.
 
-# Learn More
+## Features
 
-To learn more about React Native, take a look at the following resources:
+- React Native 0.81.4
+- TypeScript support
+- Custom native module: `DeviceInfoReactModuleSpec`
+- Android and iOS support
+- ESLint and Prettier for code quality
+- Jest for testing
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+## Getting Started
+
+### Prerequisites
+
+- Node.js >= 20
+- Yarn or npm
+- Android Studio/Xcode for native builds
+
+### Installation
+
+```sh
+npm install
+# or
+yarn install
+```
+
+### Running Metro
+
+```sh
+npm start
+# or
+yarn start
+```
+
+### Running on Android
+
+```sh
+npm run android
+# or
+yarn android
+```
+
+### Running on iOS
+
+```sh
+npm run ios
+# or
+yarn ios
+```
+
+### Linting
+
+```sh
+npm run lint
+```
+
+### Testing
+
+```sh
+npm test
+```
+
+## Codegen
+
+This project uses [react-native-codegen](https://www.npmjs.com/package/react-native-codegen) for the custom native module:
+
+- Module name: `DeviceInfoReactModuleSpec`
+- JS source directory: `specs`
+- Android Java package: `com.example.deviceinfo.react`
+
+## Directory Structure
+
+- `App.tsx` - Main app entry point
+- `specs/` - JS source for codegen
+- `android/` - Android native code
+- `ios/` - iOS native code
+- `__tests__/` - Jest tests
+
+## License
+
+This project is private.
