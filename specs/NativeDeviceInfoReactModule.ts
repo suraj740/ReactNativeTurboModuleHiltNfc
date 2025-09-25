@@ -71,5 +71,9 @@ export interface Spec extends TurboModule {
     readonly isNfcAvailable: () => Promise<boolean>;
     readonly startNfcSession: () => Promise<boolean>; 
     readonly stopNfcSession: () => Promise<boolean>;
+
+    // Nfc Write APIs
+    startNfcWriteSession: (message: string) => Promise<boolean>;
+    stopNfcWriteSession: () => Promise<boolean>;
 }
 export default TurboModuleRegistry.getEnforcing<Spec>("CustomDeviceInfoModule");

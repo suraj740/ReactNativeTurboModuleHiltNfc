@@ -5,13 +5,13 @@
  * @format
  */
 
-import { StatusBar, StyleSheet, useColorScheme, View, Button, SafeAreaView, Alert, ScrollView, Text } from 'react-native';
+import { StatusBar, StyleSheet, useColorScheme, View, Button, SafeAreaView, Alert, ScrollView, Text, NativeEventEmitter, TextInput } from 'react-native';
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 
-import DeviceInfoModule from './js/CustomDeviceInfoModule';
+import DeviceInfoModule from './specs/NativeDeviceInfoReactModule';
 import { useEffect, useState } from 'react';
 
 function App() {
@@ -29,9 +29,16 @@ function AppContent() {
 //   const safeAreaInsets = useSafeAreaInsets();
 const [nfcAvailable, setNfcAvailable] = useState<boolean | null>(null);
 const [lastTag, setLastTag] = useState<{id: string | null; techlist: string[]; ndefPayloads: string[]} | null>(null);
+const [writeMessage, setWriteMessage] = useState<string>("Hello from React Native!");
+const [lastWriteResult, setLastWriteResult] = useState<{success: boolean; message: string; tagId?:string} | null>(null);
 useEffect(() => {
-    const sub = DeviceInfoModule.addNfcListener(event => {
+    const emitter = new NativeEventEmitter();
+    const sub = emitter.addListener('NfcTagDiscovered', (event) => {
         setLastTag(event);
+    });
+
+    const writeSub = emitter.addListener('NfcWriteResult', (event) => {
+        setLastWriteResult(event);
     });
     return () => {
         sub.remove();
@@ -89,6 +96,30 @@ const stopNfc = async () => {
     }
 }
 
+const startNfcWrite = async () => {
+    if(!writeMessage.trim()) {
+        Alert.alert("NFC Write", "Please enter a message to write");
+        return;
+    }
+    try {
+        await DeviceInfoModule.startNfcWriteSession(writeMessage);
+        Alert.alert("NFC Write", "NFC write session started. Tap a writable tag...");
+    } catch (e) {
+        console.error(e);
+        Alert.alert("NFC Write", "Failed to start NFC write session");
+    }
+}
+
+const stopNfcWrite = async () => {
+    try {
+        await DeviceInfoModule.stopNfcWriteSession();
+        Alert.alert("NFC Write", "NFC write session stopped");
+    } catch (e) {
+        console.error(e);
+        Alert.alert("NFC Write", "Failed to stop NFC write session");
+    }
+}
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* <NewAppScreen
@@ -107,6 +138,31 @@ const stopNfc = async () => {
             <Button title="Stop NFC" onPress={stopNfc} />
         </View>
         <Text style={styles.note}>NFC Available: {nfcAvailable === null ? "Unknown" : nfcAvailable ? "Yes" : "No"}</Text>
+
+        <View style={styles.divider} />
+        <Text style={styles.subtitle}> NFC Write Demo</Text>
+        <TextInput
+            style={styles.textInput}
+            value={writeMessage}
+            onChangeText={setWriteMessage}
+            placeholder="Enter message to write"
+            multiline
+        />
+        <View style={styles.row}>
+            <Button title="Start Write" onPress={startNfcWrite} />
+            <View style={{ width: 12 }} />
+            <Button title="Stop Write" onPress={stopNfcWrite} />
+        </View>
+        {lastWriteResult && (
+            <View style={[styles.tagBox, {backgroundColor: lastWriteResult.success ? '#e8f5e8' : '#ffe8e8'}]}>
+                <Text style={styles.subtitle}>Last Write Result</Text>
+                <Text style={styles.text}>Status: {lastWriteResult.success ? "Success" : "Failed"}</Text>
+                <Text style={styles.text}>Message: {lastWriteResult.message}</Text>
+                {lastWriteResult.tagId && (
+                    <Text style={styles.text}>Tag ID: {lastWriteResult.tagId}</Text>
+                )}
+            </View>
+        )}
         {lastTag && (
         <View style={styles.tagBox}>
             <Text style={styles.subtitle}>Last NFC Tag</Text>
@@ -161,6 +217,18 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 8,
     alignSelf: 'stretch',
+  },
+  textInput: {
+    alignSelf: 'stretch',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    marginVertical: 12,
+    backgroundColor: '#fff',
+    minHeight: 60,
+    fontSize: 16,
+    textAlignVertical: 'top',
   }
 });
 
