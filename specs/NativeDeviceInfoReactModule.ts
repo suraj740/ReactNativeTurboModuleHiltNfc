@@ -75,5 +75,12 @@ export interface Spec extends TurboModule {
     // Nfc Write APIs
     startNfcWriteSession: (message: string) => Promise<boolean>;
     stopNfcWriteSession: () => Promise<boolean>;
+
+    // Advannced NFC APIs
+    writeAdvancedNfcTag: (type:string, data:Object) => Promise<boolean>;
+    writeCustomNfcMessage: (message: string) => Promise<boolean>;
+    eraseNfcTag: () => Promise<boolean>;
+    formatNfcTag: () => Promise<boolean>;
+    makeNfcTagReadOnly: () => Promise<boolean>;
 }
 export default TurboModuleRegistry.getEnforcing<Spec>("CustomDeviceInfoModule");

@@ -5,13 +5,14 @@
  * @format
  */
 
-import { StatusBar, StyleSheet, useColorScheme, View, Button, SafeAreaView, Alert, ScrollView, Text, NativeEventEmitter, TextInput } from 'react-native';
+import { StatusBar, StyleSheet, useColorScheme, View, Button, SafeAreaView, Alert, ScrollView, Text, NativeEventEmitter, TextInput, ActivityIndicator } from 'react-native';
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 
-import DeviceInfoModule from './specs/NativeDeviceInfoReactModule';
+// import DeviceInfoModule from './specs/NativeDeviceInfoReactModule';
+import DeviceInfoModule from './js/CustomDeviceInfoModule';
 import { useEffect, useState } from 'react';
 
 function App() {
@@ -28,20 +29,37 @@ function App() {
 function AppContent() {
 //   const safeAreaInsets = useSafeAreaInsets();
 const [nfcAvailable, setNfcAvailable] = useState<boolean | null>(null);
-const [lastTag, setLastTag] = useState<{id: string | null; techlist: string[]; ndefPayloads: string[]} | null>(null);
+const [lastTag, setLastTag] = useState<{id: string | null; techList: string[]; ndefPayloads: string[]} | null>(null);
 const [writeMessage, setWriteMessage] = useState<string>("Hello from React Native!");
 const [lastWriteResult, setLastWriteResult] = useState<{success: boolean; message: string; tagId?:string} | null>(null);
+const [writing, setWriting] = useState<boolean>(false);
+const [startWrite, setStartWrite] = useState<boolean>(false);
+
 useEffect(() => {
-    const emitter = new NativeEventEmitter();
-    const sub = emitter.addListener('NfcTagDiscovered', (event) => {
-        setLastTag(event);
+    const tagSubscription = DeviceInfoModule.addNfcListener((event) => {
+        console.log("NFC Tag Discovered:", event);
+        setLastTag(event)
     });
 
-    const writeSub = emitter.addListener('NfcWriteResult', (event) => {
+    const progressSubscription = DeviceInfoModule.addNfcWriteProgressListener((event) => {
+        console.log("NFC Write Progress:", event);
+        setWriting(event.state === 'started');
+    });
+
+    const resultSubscription = DeviceInfoModule.addNfcWriteResultListener((event) => {
+        console.log("NFC Write Result:", event);
+        setWriting(false);
         setLastWriteResult(event);
+        Alert.alert(
+            "NFC Write Result", 
+            event.success
+            ? `Success: ${event.message}${event.tagId ? ` -\n Tag ID: ${event.tagId}` : ''}` 
+            : `Failed: ${event.message}`);
     });
     return () => {
-        sub.remove();
+        tagSubscription.remove(); 
+        progressSubscription.remove(); 
+        resultSubscription.remove();
     }
 }, []);
 
@@ -97,6 +115,7 @@ const stopNfc = async () => {
 }
 
 const startNfcWrite = async () => {
+    setStartWrite(true);
     if(!writeMessage.trim()) {
         Alert.alert("NFC Write", "Please enter a message to write");
         return;
@@ -105,16 +124,19 @@ const startNfcWrite = async () => {
         await DeviceInfoModule.startNfcWriteSession(writeMessage);
         Alert.alert("NFC Write", "NFC write session started. Tap a writable tag...");
     } catch (e) {
+        setStartWrite(false);
         console.error(e);
         Alert.alert("NFC Write", "Failed to start NFC write session");
     }
 }
 
 const stopNfcWrite = async () => {
+    setStartWrite(false);
     try {
         await DeviceInfoModule.stopNfcWriteSession();
         Alert.alert("NFC Write", "NFC write session stopped");
     } catch (e) {
+        setStartWrite(true);
         console.error(e);
         Alert.alert("NFC Write", "Failed to stop NFC write session");
     }
@@ -149,9 +171,9 @@ const stopNfcWrite = async () => {
             multiline
         />
         <View style={styles.row}>
-            <Button title="Start Write" onPress={startNfcWrite} />
+            <Button title="Start Write" onPress={startNfcWrite} disabled={startWrite} />
             <View style={{ width: 12 }} />
-            <Button title="Stop Write" onPress={stopNfcWrite} />
+            <Button title="Stop Write" onPress={stopNfcWrite} disabled={!startWrite} />
         </View>
         {lastWriteResult && (
             <View style={[styles.tagBox, {backgroundColor: lastWriteResult.success ? '#e8f5e8' : '#ffe8e8'}]}>
@@ -174,6 +196,16 @@ const stopNfcWrite = async () => {
             ))}
         </View>
         )}
+        {
+            writing && (
+                <View style={styles.overlay} pointerEvents='none'>
+                    <View style={styles.overlayBox}>
+                        <ActivityIndicator size='large' color='#007AFF' />
+                        <Text style={[styles.text, { marginTop: 8 }]}>Writing to NFC tag...</Text>
+                    </View>
+                </View>
+            )
+        }
     </ScrollView>
   );
 }
@@ -229,7 +261,29 @@ const styles = StyleSheet.create({
     minHeight: 60,
     fontSize: 16,
     textAlignVertical: 'top',
-  }
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  overlayBox: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 5
+  },
 });
 
 export default App;

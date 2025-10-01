@@ -70,11 +70,52 @@ class DeviceInfoModule {
         return await NativeDeviceInfo.stopNfcSession();
     }
 
+    static async startNfcWriteSession(message: string) {
+        return await NativeDeviceInfo.startNfcWriteSession(message);
+    }
+
+    static async stopNfcWriteSession() {
+        return await NativeDeviceInfo.stopNfcWriteSession();
+    }
+
+    // Advanced NFC APIs
+    static async writeAdvancedNfcTag(type: string, data: Record<string, string>) {
+        return await NativeDeviceInfo.writeAdvancedNfcTag(type, data);
+    }
+
+    static async writeCustomNfcMessage(message: string) {
+        return await NativeDeviceInfo.writeCustomNfcMessage(message);
+    }
+
+    static async eraseNfcTag() {
+        return await NativeDeviceInfo.eraseNfcTag();
+    }
+
+    static async formatNfcTag() {
+        return await NativeDeviceInfo.formatNfcTag();
+    }
+
+    static async makeNfcTagReadOnly() {
+        return await NativeDeviceInfo.makeNfcTagReadOnly();
+    }
+
     // Event helpers
     // Uses the global RCTDeviceEventEmitter via NativeEventEmitter without a native module arg
-    static addNfcListener(callback: (event: { id: string | null; techlist: string[]; ndefPayloads: string[] }) => void) {
+    static addNfcListener(callback: (event: { id: string | null; techList: string[]; ndefPayloads: string[] }) => void) {
         const emitter = new NativeEventEmitter();
         const subscription = emitter.addListener('NfcTagDiscovered', callback);
+        return subscription;
+    }
+
+    static addNfcWriteProgressListener(callback: (event: { state: 'started' | 'finished'; tagId?: string }) => void) {
+        const emitter = new NativeEventEmitter();
+        const subscription = emitter.addListener('NfcWriteProgress', callback);
+        return subscription;
+    }
+
+    static addNfcWriteResultListener(callback: (event: { success: boolean; message: string; tagId?: string }) => void) {
+        const emitter = new NativeEventEmitter();
+        const subscription = emitter.addListener('NfcWriteResult', callback);
         return subscription;
     }
 }
